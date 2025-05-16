@@ -1,0 +1,97 @@
+@page "/auth/register"
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@rendermode InteractiveServer
+@using ManagerSystem.Services.Auth
+@using ManagerSystem.Models.Auth
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                注册新账户
+            </h2>
+        </div>
+        <EditForm Model="@registerModel" OnValidSubmit="HandleRegistration" FormName="registerForm" class="mt-8 space-y-6">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-red-500" />
+
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div>
+                    <label for="username" class="sr-only">用户名</label>
+                    <InputText id="username" 
+                               @bind-value="registerModel.Username" 
+                               class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                               placeholder="用户名" />
+                </div>
+                <div>
+                    <label for="password" class="sr-only">密码</label>
+                    <InputText type="password" 
+                               id="password" 
+                               @bind-value="registerModel.Password" 
+                               class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                               placeholder="密码" />
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="text-red-500 text-sm">
+                    @errorMessage
+                </div>
+            }
+
+            <div>
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    注册
+                </button>
+            </div>
+
+            <div class="text-sm text-center">
+                <a href="/auth/login" class="font-medium text-indigo-600 hover:text-indigo-500">
+                    已有账户？点击登录
+                </a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private string? errorMessage;
+
+    private class RegisterModel
+    {
+        [Required(ErrorMessage = "请输入用户名")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "用户名长度必须在3-50个字符之间")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "请输入密码")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "密码长度必须在6-100个字符之间")]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private async Task HandleRegistration()
+    {
+        try
+        {
+            var result = await AuthService.RegisterAsync(registerModel.Username, registerModel.Password);
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo("/auth/login");
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "注册过程中发生错误，请稍后重试";
+        }
+    }
+}

@@ -1,0 +1,32 @@
+﻿@page "/counter"
+@rendermode InteractiveServer
+@using ManagerSystem.Models.Auth
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+
+<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+
+<div></div>
+
+<ManagerSystem.Components.Auth.AuthorizeView Resource="ExportData" PermissionType="PermissionType.Function">
+    <ChildContent>
+        <button class="px-4 py-2 bg-blue-500 text-white rounded">导出数据</button>
+    </ChildContent>
+    <UnauthorizedContent>
+        <button class="px-4 py-2 bg-gray-300 text-gray-500 rounded" disabled>无权限导出</button>
+    </UnauthorizedContent>
+</ManagerSystem.Components.Auth.AuthorizeView>
+
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}

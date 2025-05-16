@@ -1,0 +1,56 @@
+@using ManagerSystem.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using ManagerSystem.Models.Auth
+@inject IAuthService AuthService
+@inject AuthenticationStateProvider AuthStateProvider
+
+@if (IsAuthorized)
+{
+    @ChildContent
+}
+else
+{
+    @UnauthorizedContent
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public RenderFragment? UnauthorizedContent { get; set; }
+
+    [Parameter]
+    public string? Resource { get; set; }
+
+    [Parameter]
+    public PermissionType PermissionType { get; set; } = PermissionType.Page;
+
+    private bool IsAuthorized { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            
+            if (string.IsNullOrEmpty(Resource))
+            {
+                // 如果没有指定资源，则只要用户已认证就授权
+                IsAuthorized = true;
+            }
+            else
+            {
+                // 检查用户是否有访问指定资源的权限
+                IsAuthorized = await AuthService.HasPermissionAsync(userId, Resource, PermissionType);
+            }
+        }
+        else
+        {
+            IsAuthorized = false;
+        }
+    }
+}

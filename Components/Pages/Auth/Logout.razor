@@ -1,0 +1,18 @@
+@page "/auth/logout"
+@using ManagerSystem.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("点击了退出登录");
+
+        // 下面是原有代码
+        var authStateProvider = (AuthStateProvider)AuthStateProvider;
+        await authStateProvider.LogoutAsync();
+        NavigationManager.NavigateTo("/auth/login");
+    }
+}

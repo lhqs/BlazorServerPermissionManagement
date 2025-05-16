@@ -1,0 +1,251 @@
+@page "/admin/roles"
+@rendermode InteractiveServer
+@using ManagerSystem.Models.Auth
+@using ManagerSystem.Services.Auth
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>角色管理</PageTitle>
+
+<ManagerSystem.Components.Auth.AuthorizeView Resource="/admin/roles" PermissionType="PermissionType.Page">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-2xl font-bold mb-6">角色管理</h1>
+
+        <div class="mb-4 flex justify-between items-center">
+            <button @onclick="() => ShowRoleModal(new Role())" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                添加角色
+            </button>
+        </div>
+
+        @if (roles == null)
+        {
+            <p>加载中...</p>
+            <p class="text-red-500 text-xs mt-2">请确认已登录且拥有访问权限，或检查后端服务与数据库连接。</p>
+        }
+        else if (!roles.Any())
+        {
+            <p>暂无角色数据</p>
+        }
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">角色名称</th>
+                            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">描述</th>
+                            <th class="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var role in roles)
+                        {
+                            <tr>
+                                <td class="py-2 px-4 border-b border-gray-200">@role.Id</td>
+                                <td class="py-2 px-4 border-b border-gray-200">@role.Name</td>
+                                <td class="py-2 px-4 border-b border-gray-200">@role.Description</td>
+                                <td class="py-2 px-4 border-b border-gray-200">
+                                    <button @onclick="() => ShowRoleModal(role)" class="text-blue-500 hover:text-blue-700 mr-2">编辑</button>
+                                    <button @onclick="() => ShowPermissionsModal(role)" class="text-green-500 hover:text-green-700 mr-2">权限</button>
+                                    <button @onclick="() => DeleteRole(role.Id)" class="text-red-500 hover:text-red-700">删除</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (showRoleModal)
+        {
+            <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                    <h2 class="text-xl font-bold mb-4">@(currentRole.Id == 0 ? "添加角色" : "编辑角色")</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="name">角色名称</label>
+                        <input type="text" id="name" @bind="currentRole.Name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="description">描述</label>
+                        <textarea id="description" @bind="currentRole.Description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button @onclick="CloseRoleModal" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+                            取消
+                        </button>
+                        <button @onclick="SaveRole" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            保存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (showPermissionsModal)
+        {
+            <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                    <h2 class="text-xl font-bold mb-4">角色权限 - @currentRole.Name</h2>
+                    
+                    <div class="mb-4 max-h-96 overflow-y-auto">
+                        <h3 class="font-bold mb-2">权限列表</h3>
+                        @if (permissions != null)
+                        {
+                            @foreach (var permission in permissions)
+                            {
+                                <div class="flex items-center mb-2">
+                                    <input type="checkbox" id="permission-@permission.Id" 
+                                           checked="@IsPermissionSelected(permission.Id)" 
+                                           @onchange="(e) => TogglePermission(permission.Id, e.Value != null && (bool)e.Value)" 
+                                           class="mr-2" />
+                                    <label for="permission-@permission.Id" class="flex-1">
+                                        <div>@permission.Name</div>
+                                        <div class="text-xs text-gray-500">@permission.ResourceUri (@permission.Type)</div>
+                                    </label>
+                                </div>
+                            }
+                        }
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button @onclick="ClosePermissionsModal" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+                            取消
+                        </button>
+                        <button @onclick="SaveRolePermissions" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            保存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</ManagerSystem.Components.Auth.AuthorizeView>
+
+@code {
+    private List<Role>? roles;
+    private List<Permission>? permissions;
+    private Role currentRole = new Role();
+    private bool showRoleModal = false;
+    private bool showPermissionsModal = false;
+    private List<int> selectedPermissionIds = new List<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            roles = await AuthService.GetAllRolesAsync();
+            permissions = await AuthService.GetAllPermissionsAsync();
+        }
+        catch (Exception ex)
+        {
+            roles = new List<Role>();
+            permissions = new List<Permission>();
+            // 可根据需要将异常信息显示到页面
+            Console.WriteLine($"加载角色或权限数据失败: {ex.Message}");
+        }
+    }
+
+    private void ShowRoleModal(Role role)
+    {
+        currentRole = role.Id == 0 ? new Role() : new Role
+        {
+            Id = role.Id,
+            Name = role.Name,
+            Description = role.Description
+        };
+
+        showRoleModal = true;
+    }
+
+    private void CloseRoleModal()
+    {
+        showRoleModal = false;
+    }
+
+    private async Task SaveRole()
+    {
+        if (string.IsNullOrWhiteSpace(currentRole.Name))
+        {
+            // 显示错误信息
+            return;
+        }
+
+        if (currentRole.Id == 0)
+        {
+            // 创建新角色
+            await AuthService.CreateRoleAsync(currentRole);
+        }
+        else
+        {
+            // 更新现有角色
+            await AuthService.UpdateRoleAsync(currentRole);
+        }
+
+        await LoadData();
+        CloseRoleModal();
+    }
+
+    private async Task DeleteRole(int roleId)
+    {
+        if (await AuthService.DeleteRoleAsync(roleId))
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task ShowPermissionsModal(Role role)
+    {
+        currentRole = role;
+        selectedPermissionIds.Clear();
+
+        // 获取角色的权限
+        var rolePermissions = await AuthService.GetRolePermissionsAsync(role.Id);
+        foreach (var permission in rolePermissions)
+        {
+            selectedPermissionIds.Add(permission.Id);
+        }
+
+        showPermissionsModal = true;
+    }
+
+    private void ClosePermissionsModal()
+    {
+        showPermissionsModal = false;
+    }
+
+    private bool IsPermissionSelected(int permissionId)
+    {
+        return selectedPermissionIds.Contains(permissionId);
+    }
+
+    private void TogglePermission(int permissionId, bool isSelected)
+    {
+        if (isSelected && !selectedPermissionIds.Contains(permissionId))
+        {
+            selectedPermissionIds.Add(permissionId);
+        }
+        else if (!isSelected && selectedPermissionIds.Contains(permissionId))
+        {
+            selectedPermissionIds.Remove(permissionId);
+        }
+    }
+
+    private async Task SaveRolePermissions()
+    {
+        // 调用AuthService更新角色权限
+        await AuthService.UpdateRolePermissionsAsync(currentRole.Id, selectedPermissionIds);
+        
+        // 重新加载数据
+        await LoadData();
+        ClosePermissionsModal();
+    }
+}

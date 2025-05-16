@@ -1,0 +1,81 @@
+﻿@using ManagerSystem.Services.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<div class="top-row navbar navbar-dark bg-gray-800">
+  <div class="container-fluid flex items-center justify-center h-16">
+    <a class="navbar-brand text-white" href="">ManagerSystem</a>
+  </div>
+</div>
+
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <AuthorizeView>
+        <Authorized>
+            <nav class="nav flex-column">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> 首页
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="counter">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> 计数器
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="weather">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> 天气预报
+                    </NavLink>
+                </div>
+
+                <ManagerSystem.Components.Auth.AuthorizeView Resource="/admin/users" PermissionType="ManagerSystem.Models.Auth.PermissionType.Page">
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin/users">
+                            <span class="bi bi-people-fill" aria-hidden="true"></span> 用户管理
+                        </NavLink>
+                    </div>
+                </ManagerSystem.Components.Auth.AuthorizeView>
+
+                <ManagerSystem.Components.Auth.AuthorizeView Resource="/admin/roles" PermissionType="ManagerSystem.Models.Auth.PermissionType.Page">
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin/roles">
+                            <span class="bi bi-person-badge-fill" aria-hidden="true"></span> 角色管理
+                        </NavLink>
+                    </div>
+                </ManagerSystem.Components.Auth.AuthorizeView>
+
+                <ManagerSystem.Components.Auth.AuthorizeView Resource="/admin/permissions" PermissionType="ManagerSystem.Models.Auth.PermissionType.Page">
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="admin/permissions">
+                            <span class="bi bi-shield-lock-fill" aria-hidden="true"></span> 权限管理
+                        </NavLink>
+                    </div>
+                </ManagerSystem.Components.Auth.AuthorizeView>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/auth/logout">
+                        <span class="" aria-hidden="true"></span> 退出登录
+                    </NavLink>
+                </div>
+            </nav>
+        </Authorized>
+        <NotAuthorized>
+            <div class="d-flex flex-column align-items-center justify-content-center mt-4 text-white">
+                <p class="text-light mb-3">请先登录系统</p>
+                <div class="d-flex gap-2">
+                    <a href="auth/login" class="btn btn-primary">去登录</a>
+                    <a href="auth/register" class="btn btn-outline-light">注册账号</a>
+                </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>
+
+

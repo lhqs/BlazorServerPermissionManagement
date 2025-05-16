@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0-preview.2.24128.4" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0-preview.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0-preview.2.24128.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+
+  <!-- Get all NPM Packages -->
+	<Target Name="NPMInstall" BeforeTargets="Build" Condition="!Exists('node_modules')">
+		<Exec Command="pnpm i" />
+	</Target>
+
+	<!-- Build tailwind css file '.\wwwroot\css\output.css' based on '.\wwwroot\css\site.css' file-->
+	<Target Name="Tailwind" BeforeTargets="Build">
+		<Exec Command="pnpm run css:build" />
+	</Target>
+</Project>
