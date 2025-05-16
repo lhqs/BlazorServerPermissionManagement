@@ -23,7 +23,7 @@ Blazor Server 权限管理方案是一个基于 Blazor 的权限管理系统，�
 以下是权限管理方案的效果视频：
 
 <video width="640" height="480" controls>
-    <source src="permission-demo.mp4" type="video/mp4">
+    <source src="./permission-demo.mp4" type="video/mp4">
     您的浏览器不支持 HTML5 视频标签。
 </video>
 
